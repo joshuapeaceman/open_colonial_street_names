@@ -133,7 +133,7 @@
      </widget>
     </item>
     <item row="5" column="0">
-     <widget class="QTreeWidget" name="treeWidget">
+     <widget class="QTreeWidget" name="resultview">
       <column>
        <property name="text">
         <string notr="true">1</string>

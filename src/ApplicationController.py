@@ -31,6 +31,7 @@ class AppController:
         self._mainWindow.show()
 
         self._mainWindow.search.clicked.connect(self.search_street_data_set_for_problematic_names)
+        self._mainWindow.add.clicked.connect(self.add_name_to_problematic_list)
 
         self.load_categories_from_json_into_combo_box()
         self.load_problematic_names_from_json_into_treeWidget()
@@ -49,7 +50,7 @@ class AppController:
             traceback.print_exc()
 
     def load_problematic_names_from_json_into_treeWidget(self):
-        self._mainWindow.problematic_names.clear()
+
         self.problematic_names.clear()
 
         try:
@@ -61,26 +62,62 @@ class AppController:
                 for item in json_data['problematic_names']:
                     self.problematic_names.append(ProblematicNames.ProblematicNames(str(item[0]),
                                                                                     str(item[1])))
-                    parent = QTreeWidgetItem(self._mainWindow.problematic_names)
-                    parent.setText(0, str(item[0]))
-                    parent.setText(1, str(item[1]))
 
-                self._mainWindow.problematic_names.setHeaderLabels(
-                    ['Name', 'Kategorie'])
-
-                self._mainWindow.problematic_names.setSortingEnabled(True)
-                self._mainWindow.problematic_names.header().show()
-
+                self.load_problematic_names_into_view()
         except:
             traceback.print_exc()
 
+    def load_problematic_names_into_view(self):
+        self._mainWindow.problematic_names.clear()
+        for problematic_name in self.problematic_names:
+            parent = QTreeWidgetItem(self._mainWindow.problematic_names)
+            parent.setText(0, str(problematic_name.name))
+            parent.setText(1, str(problematic_name.category))
+
+        self._mainWindow.problematic_names.setHeaderLabels(
+            ['Name', 'Kategorie'])
+
+        self._mainWindow.problematic_names.setSortingEnabled(True)
+        self._mainWindow.problematic_names.header().show()
+
+
     def search_street_data_set_for_problematic_names(self):
+        self.statistics.clear()
+
         for street_object in self.problematic_names:
             for idx in self.unique_streets:
                 prob_name = str(street_object.name).lower()
                 street_name = str(self.unique_streets[idx].street_name).lower()
                 if prob_name in street_name:
+                    if street_name in self.statistics:
+                        self.statistics[street_name] += 1
+                    else:
+                        self.statistics[street_name] = 1
+
                     print(street_name, self.unique_streets[idx].zip_code)
+
+        self.load_statistics_into_result_view()
+
+    def load_statistics_into_result_view(self):
+        self._mainWindow. resultview.clear()
+
+        for idx in self.statistics:
+
+            parent = QTreeWidgetItem(self._mainWindow.resultview)
+            parent.setText(0, str(idx))
+            parent.setText(1, str(self.statistics[idx]))
+
+        self._mainWindow.resultview.setHeaderLabels(
+            ['Straßenname', 'Anzahl'])
+
+        self._mainWindow.resultview.setSortingEnabled(True)
+        self._mainWindow.resultview.header().show()
+
+    def add_name_to_problematic_list(self):
+        if self._mainWindow.name_begriff.text() != '' and self._mainWindow.kategorie.currentText() != '':
+            self.problematic_names.append(ProblematicNames.ProblematicNames(self._mainWindow.name_begriff.text(), self._mainWindow.kategorie.currentText()))
+            self.load_problematic_names_into_view()
+
 
     def open_street_names_from_xlsx_file(self):
         wb = xlrd.open_workbook(BasePath.get_dresden_street_names_from_xlsx_dir())
