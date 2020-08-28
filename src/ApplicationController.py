@@ -1,20 +1,65 @@
+import xlrd
 from PyQt5 import QtWidgets, QtCore
 from xml.etree import ElementTree
-from src.model import Street
 
+from PyQt5.QtWidgets import QTreeWidgetItem
+
+from src.model import Street
+from src.gui import MainWindow
+
+
+from src import BasePath
 class AppController:
-    def __init__(self):
+    def __init__(self, app_version):
+        self._app_version = app_version
         self.unique_streets = {}
-        self.streets = {}
-        self.colonial_problems = []
+        self.problematic_names = []
         self.statistics = {}
 
         self._mainWindow = None
         self.set_up_gui()
-        self.read_street_names_from_osm_database()
+
+
+        """only needed for open street map data sets which are not very nice"""
+        # self.read_street_names_from_osm_database()
+
+        self.open_street_names_from_xlsx_file()
 
     def set_up_gui(self):
-        pass
+        self._mainWindow = MainWindow.MainWindow(self._app_version)
+        self._mainWindow.show()
+
+
+
+
+    def open_street_names_from_xlsx_file(self):
+        wb = xlrd.open_workbook(BasePath.get_dresden_street_names_from_xlsx_dir())
+        sheet = wb.sheet_by_index(0)
+
+        for i in range(sheet.nrows):
+            self.unique_streets.update({i: Street.Street(sheet.cell_value(i, 1),
+                                                         sheet.cell_value(i, 2),
+                                                         sheet.cell_value(i, 3))})
+
+        self.load_street_names_into_table_widget()
+
+
+    def load_street_names_into_table_widget(self):
+        for idx in self.unique_streets:
+            parent = QTreeWidgetItem(self._mainWindow.street_names)
+            parent.setText(0, str(self.unique_streets[idx].street_name))
+            parent.setText(1,  str(self.unique_streets[idx].stadtteil))
+            parent.setText(2,  str(self.unique_streets[idx].zip_code))
+            parent.setText(3,  str(self.unique_streets[idx].city))
+
+        self._mainWindow.street_names.setHeaderLabels(
+            ['Straßenname', 'Stadtteil', 'Postleitzahl', 'Stadt'])
+
+        self._mainWindow.street_names.setSortingEnabled(True)
+        self._mainWindow.street_names.header().show()
+
+
+
 
     def open_osm_files_and_return_file_dir(self):
         dialog = QtWidgets.QFileDialog(None)

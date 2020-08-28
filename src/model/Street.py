@@ -1,9 +1,9 @@
 class Street:
-    def __init__(self, street_name):
+    def __init__(self, street_name, stadtteil, zip_code):
         self.__street_name = street_name
-        self.__city = ''
-        self.__zip_code = ''
-        self.__state = ''
+        self.__city = 'Dresden'
+        self.__zip_code = zip_code
+        self.__stadtteil = stadtteil
 
     @property
     def street_name(self):
@@ -30,9 +30,9 @@ class Street:
         self.__zip_code = value
 
     @property
-    def state(self):
-        return self.__state
+    def stadtteil(self):
+        return self.__stadtteil
 
-    @state.setter
-    def state(self, value):
-        self.__state = value
+    @stadtteil.setter
+    def stadtteil(self, value):
+        self.__stadtteil = value
