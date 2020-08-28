@@ -1,14 +1,16 @@
-import xlrd
-from PyQt5 import QtWidgets, QtCore
+import traceback
 from xml.etree import ElementTree
 
+import jsonpickle
+import xlrd
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QTreeWidgetItem
 
-from src.model import Street
-from src.gui import MainWindow
-
-
 from src import BasePath
+from src.gui import MainWindow
+from src.model import Street, ProblematicNames
+
+
 class AppController:
     def __init__(self, app_version):
         self._app_version = app_version
@@ -19,7 +21,6 @@ class AppController:
         self._mainWindow = None
         self.set_up_gui()
 
-
         """only needed for open street map data sets which are not very nice"""
         # self.read_street_names_from_osm_database()
 
@@ -29,8 +30,57 @@ class AppController:
         self._mainWindow = MainWindow.MainWindow(self._app_version)
         self._mainWindow.show()
 
+        self._mainWindow.search.clicked.connect(self.search_street_data_set_for_problematic_names)
 
+        self.load_categories_from_json_into_combo_box()
+        self.load_problematic_names_from_json_into_treeWidget()
 
+    def load_categories_from_json_into_combo_box(self):
+        self._mainWindow.kategorie.clear()
+        try:
+            with open(BasePath.get_category_json_dir(), 'r') as file:
+                data = file.read()
+                jsonpickle.set_decoder_options('json', encoding='utf8')
+                json_data = jsonpickle.decode(data)
+
+                for item in json_data['categories']:
+                    self._mainWindow.kategorie.addItem(item)
+        except:
+            traceback.print_exc()
+
+    def load_problematic_names_from_json_into_treeWidget(self):
+        self._mainWindow.problematic_names.clear()
+        self.problematic_names.clear()
+
+        try:
+            with open(BasePath.get_category_json_dir(), 'r') as file:
+                data = file.read()
+                jsonpickle.set_decoder_options('json', encoding='utf8')
+                json_data = jsonpickle.decode(data)
+
+                for item in json_data['problematic_names']:
+                    self.problematic_names.append(ProblematicNames.ProblematicNames(str(item[0]),
+                                                                                    str(item[1])))
+                    parent = QTreeWidgetItem(self._mainWindow.problematic_names)
+                    parent.setText(0, str(item[0]))
+                    parent.setText(1, str(item[1]))
+
+                self._mainWindow.problematic_names.setHeaderLabels(
+                    ['Name', 'Kategorie'])
+
+                self._mainWindow.problematic_names.setSortingEnabled(True)
+                self._mainWindow.problematic_names.header().show()
+
+        except:
+            traceback.print_exc()
+
+    def search_street_data_set_for_problematic_names(self):
+        for street_object in self.problematic_names:
+            for idx in self.unique_streets:
+                prob_name = str(street_object.name).lower()
+                street_name = str(self.unique_streets[idx].street_name).lower()
+                if prob_name in street_name:
+                    print(street_name, self.unique_streets[idx].zip_code)
 
     def open_street_names_from_xlsx_file(self):
         wb = xlrd.open_workbook(BasePath.get_dresden_street_names_from_xlsx_dir())
@@ -43,23 +93,20 @@ class AppController:
 
         self.load_street_names_into_table_widget()
 
-
     def load_street_names_into_table_widget(self):
+        self._mainWindow.street_names.clear()
         for idx in self.unique_streets:
             parent = QTreeWidgetItem(self._mainWindow.street_names)
             parent.setText(0, str(self.unique_streets[idx].street_name))
-            parent.setText(1,  str(self.unique_streets[idx].stadtteil))
-            parent.setText(2,  str(self.unique_streets[idx].zip_code))
-            parent.setText(3,  str(self.unique_streets[idx].city))
+            parent.setText(1, str(self.unique_streets[idx].stadtteil))
+            parent.setText(2, str(self.unique_streets[idx].zip_code))
+            parent.setText(3, str(self.unique_streets[idx].city))
 
         self._mainWindow.street_names.setHeaderLabels(
             ['Straßenname', 'Stadtteil', 'Postleitzahl', 'Stadt'])
 
         self._mainWindow.street_names.setSortingEnabled(True)
         self._mainWindow.street_names.header().show()
-
-
-
 
     def open_osm_files_and_return_file_dir(self):
         dialog = QtWidgets.QFileDialog(None)
@@ -92,8 +139,7 @@ class AppController:
                                 cnt += 1
 
         for _ in self.streets:
-           self.unique_streets.update({self.streets[_][0]: ''})
-
+            self.unique_streets.update({self.streets[_][0]: ''})
 
         pass
 
@@ -102,5 +148,3 @@ class AppController:
         #         if data == self.streets[idx2][0]:
         #             if len(self.streets[idx2]) > 1:
         #                 pass
-
-
