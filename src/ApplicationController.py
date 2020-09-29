@@ -60,7 +60,15 @@ class AppController:
                 json_data = jsonpickle.decode(data)
 
                 for item in json_data['problematic_names']:
-                    self.problematic_names.append(ProblematicNames.ProblematicNames(str(item[0]),
+                    name = str(item[0])
+                    if 'Ã¶' in name:
+                        print('stop')
+                        name = name.replace('Ã¶', 'ö')
+                    elif 'Ã¤' in name:
+                        name = name.replace('Ã¤', 'ä')
+                    elif 'Ã¼' in name:
+                        name = name.replace('Ã¼', 'ü')
+                    self.problematic_names.append(ProblematicNames.ProblematicNames(name,
                                                                                     str(item[1])))
 
                 self.load_problematic_names_into_view()

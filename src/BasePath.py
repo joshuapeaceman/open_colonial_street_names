@@ -22,4 +22,4 @@ def get_dresden_street_names_from_xlsx_dir():
     return os.path.join(get_file_dir(), 'data_and_configs', 'dresden.xlsx')
 
 def get_category_json_dir():
-    return os.path.join(get_file_dir(), 'data_and_configs', 'categories.json')
+    return os.path.join(get_file_dir(), 'data_and_configs', 'categories_and_problematic_names.json')
